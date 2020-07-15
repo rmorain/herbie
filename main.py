@@ -26,8 +26,8 @@ class SQuADLM(pl.LightningModule):
         super().__init__()
         self.tokenizer = GPT2Tokenizer.from_pretrained(FLAGS.model)
         self.tokenizer.pad_token = self.tokenizer.eos_token 
-        self.model = GPT2LMHeadModel.from_pretrained(FLAGS.model, pad_token_id=self.tokenizer.eos_token_id)
-        self.loss = torch.nn.CrossEntropyLoss(reduction='none')
+        # self.model = GPT2LMHeadModel.from_pretrained(FLAGS.model, pad_token_id=self.tokenizer.eos_token_id)
+        # self.loss = torch.nn.CrossEntropyLoss(reduction='none')
 
     # Download and prepare data
     def prepare_data(self):
