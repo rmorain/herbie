@@ -24,15 +24,16 @@ FLAGS = flags.FLAGS
 class SQuADLM(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.tokenizer = GPT2Tokenizer.from_pretrained(FLAGS.model)
-        self.tokenizer.pad_token = self.tokenizer.eos_token 
+        
         # self.model = GPT2LMHeadModel.from_pretrained(FLAGS.model, pad_token_id=self.tokenizer.eos_token_id)
         # self.loss = torch.nn.CrossEntropyLoss(reduction='none')
 
     # Download and prepare data
     def prepare_data(self):
+        tokenizer = GPT2Tokenizer.from_pretrained(FLAGS.model)
+        tokenizer.pad_token = tokenizer.eos_token 
         def _tokenize(x):
-            x['input_ids'] = self.tokenizer.batch_encode_plus(
+            x['input_ids'] = tokenizer.batch_encode_plus(
                 x['question'],
                 max_length=FLAGS.seq_length,
                 pad_to_max_length=True)['input_ids']
