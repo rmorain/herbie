@@ -24,41 +24,43 @@ FLAGS = flags.FLAGS
 class SQuADLM(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        
-        # self.model = GPT2LMHeadModel.from_pretrained(FLAGS.model, pad_token_id=self.tokenizer.eos_token_id)
-        # self.loss = torch.nn.CrossEntropyLoss(reduction='none')
+        self.model = GPT2LMHeadModel.from_pretrained(FLAGS.model)
+        self.loss = torch.nn.CrossEntropyLoss(reduction='none')
 
     # Download and prepare data
     def prepare_data(self):
-        tokenizer = GPT2Tokenizer.from_pretrained(FLAGS.model)
-        tokenizer.pad_token = tokenizer.eos_token 
+        self.tokenizer = GPT2Tokenizer.from_pretrained(FLAGS.model)
+        self.tokenizer.pad_token = tokenizer.eos_token 
         def _tokenize(x):
-            x['input_ids'] = tokenizer.batch_encode_plus(
+            x['input_ids'] = self.tokenizer.batch_encode_plus(
                 x['question'],
                 max_length=FLAGS.seq_length,
                 pad_to_max_length=True)['input_ids']
-            # answers = [a['text'][0] for a in x['answers']]
-            # x['label'] = self.tokenizer.batch_encode_plus(
-            #     answers,
-            #     max_length=FLAGS.seq_length,
-            #     pad_to_max_length=True)['input_ids']
-            # print('here')
+            answers = [a['text'][0] for a in x['answers']]
+            x['label'] = self.tokenizer.batch_encode_plus(
+                answers,
+                max_length=FLAGS.seq_length,
+                pad_to_max_length=True)['input_ids']
             return x
         
         def _prepare_ds(split):
             ds = nlp.load_dataset(FLAGS.dataset, split=f'{split}[:{FLAGS.batch_size if FLAGS.debug else f"{FLAGS.percent}%"}]')
             ds = ds.map(_tokenize, batched=True)
-            import IPython ; IPython.embed() ; exit(1)
             ds.set_format(type='torch', columns=['input_ids', 'label'])
-            import IPython ; IPython.embed() ; exit(1)
             return ds
 
         self.train_ds, self.test_ds = map(_prepare_ds, ('train', 'test'))
 
-    def forward(self, input_ids):
-        pass
+    def forward(self, input_ids, label):
+        answer_length = (input_ids != self.tokenizer.eos_token).float().size()[-1]
+        generated_answer = self.model.generate(
+            input_ids, 
+            max_length=answer_length,
+            )
+        return generated_answer
 
     def training_step(self, batch, batch_idx):
+        generated_answer = self.forward(batch['input_ids'], batch['label'])
         pass
 
     def validation_step(self, batch, batch_idx):
