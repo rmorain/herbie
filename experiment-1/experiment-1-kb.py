@@ -5,17 +5,22 @@ import sh
 import nlp
 import wandb
 from pytorch_lightning.loggers import WandbLogger
+from rake_nltk import Rake
+from wikidata.client import Client
+import requests
 
 # !wandb login e279feeab3d602ab530e4eb23df8ac3ff3763461
+# import IPython ; IPython.embed() ; exit(1)
 
-# Variables
+# Flags for parameters that can be specified from command line
 model_name = 'gpt2'
-epochs = 10
-debug = True
+epochs = 1
+debug = False
 batch_size = 8
-percent = 100
+percent = 1
 dataset = 'wikitext'
 seq_length = 32
+statement_length = 16
 momentum = .9
 lr = 1e-2
 repo = 'wikitext-103-raw-v1'
@@ -27,9 +32,11 @@ class WikitextLM(pl.LightningModule):
         config = GPT2Config()
         self.model = GPT2LMHeadModel(config)
         self.loss = torch.nn.CrossEntropyLoss(reduction='none')
+        self.rake = Rake()
+        self.client = Client()
 
     def get_id(self, token):
-        """Request a word from ConceptNet"""
+        """Request a word from Wikidata"""
         assert isinstance(token, str), "Request token not a string"
         endpoint = "http://wikidata.org/w/api.php?"
         action = "action=wbsearchentities&"
@@ -49,17 +56,16 @@ class WikitextLM(pl.LightningModule):
     def prepare_data(self):
         tokenizer = GPT2Tokenizer.from_pretrained(model_name)
         tokenizer.pad_token = tokenizer.eos_token 
-        rake = Rake()
-        client = Client()
+        self.EOS = tokenizer.pad_token
 
         def _extract_knowledge(x):
             try:
-                rake.extract_keywords_from_text(x['text'])
-                ranked_phrases = rake.get_ranked_phrases()
+                self.rake.extract_keywords_from_text(x['text'])
+                ranked_phrases = self.rake.get_ranked_phrases()
                 for phrase in ranked_phrases:
                     try:
                         id = self.get_id(phrase)
-                        entity = client.get(id)
+                        entity = self.client.get(id)
                         description = entity.attributes['descriptions']['en']['value']
                         break
                     except:
@@ -99,10 +105,11 @@ class WikitextLM(pl.LightningModule):
         self.train_ds, self.val_ds = map(_prepare_ds, ('train', 'validation'))
 
     def forward(self, inputs):
-        # Only call if training
-        input_ids = inputs['input_ids']
-        attention_mask = inputs['attention_mask']
-        loss = self.model(input_ids, attention_mask=attention_mask, labels=input_ids)[0]
+        x = torch.cat((inputs['input_ids'], inputs['statement_ids']), -1)   
+        attention_mask = torch.cat((inputs['attention_mask'], inputs['statement_mask']), -1)  
+        padding = torch.full_like(inputs['statement_ids'], fill_value=50256, dtype=torch.long, device=torch.device('cuda'))   
+        labels = torch.cat((inputs['input_ids'], padding), dim=-1)
+        loss = self.model(x, attention_mask=attention_mask, labels=labels)[0]
         return loss
 
     def training_step(self, batch, batch_idx):
@@ -144,7 +151,7 @@ class WikitextLM(pl.LightningModule):
             self.parameters(),
             lr=lr,
             momentum=momentum,
-        ) 
+        )  
 
 model = WikitextLM()
 trainer = pl.Trainer(
@@ -156,4 +163,3 @@ trainer = pl.Trainer(
 )
 
 trainer.fit(model)
-trainer.save_checkpoint("model.ckpt")
