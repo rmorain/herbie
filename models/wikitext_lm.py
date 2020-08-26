@@ -6,39 +6,23 @@ import nlp
 import wandb
 from pytorch_lightning.loggers import WandbLogger
 from rake_nltk import Rake
-from wikidata.client import Client
+from utils.wikitext_client import WikitextClient
 import requests
 
 # The model to train on the scientific papers dataset
 class WikitextLM(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, model_name):
         super().__init__()
         config = GPT2Config()
+        self.model_name = model_name
         self.model = GPT2LMHeadModel(config)
         self.loss = torch.nn.CrossEntropyLoss(reduction='none')
         self.rake = Rake()
-        self.client = Client()
-
-    def get_id(self, token):
-        """Request a word from Wikidata"""
-        assert isinstance(token, str), "Request token not a string"
-        endpoint = "http://wikidata.org/w/api.php?"
-        action = "action=wbsearchentities&"
-        search = "search=" + token + "&"
-        language = "language=en&"
-        format = "format=json"
-        request = endpoint + action + search + language + format
-        resource = requests.get(request)
-        assert resource.status_code == requests.codes.ok
-        try:
-            id = resource.json()['search'][0]['id']
-        except:
-            id = None
-        return id
+        self.wikitext_client = WikitextClient()
 
     # Download and prepare data
     def prepare_data(self):
-        tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+        tokenizer = GPT2Tokenizer.from_pretrained(self.model_name)
         tokenizer.pad_token = tokenizer.eos_token 
         self.EOS = tokenizer.pad_token
 

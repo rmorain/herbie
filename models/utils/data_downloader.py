@@ -6,3 +6,4 @@ class DataDownloader():
         """
             Download data from wikitext. Write data to a txt file. 
         """
+        

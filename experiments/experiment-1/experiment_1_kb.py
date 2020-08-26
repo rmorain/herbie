@@ -1,13 +1,7 @@
-from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config
 import pytorch_lightning as pl
-import torch
-import sh
-import nlp
 import wandb
 from pytorch_lightning.loggers import WandbLogger
-from rake_nltk import Rake
-from wikidata.client import Client
-import requests
+from models.wikitext_lm import WikitextLM
 
 # !wandb login e279feeab3d602ab530e4eb23df8ac3ff3763461
 # import IPython ; IPython.embed() ; exit(1)
@@ -24,7 +18,6 @@ statement_length = 16
 momentum = .9
 lr = 1e-2
 repo = 'wikitext-103-raw-v1'
-
 
 model = WikitextLM()
 trainer = pl.Trainer(
