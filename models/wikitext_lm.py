@@ -11,14 +11,16 @@ import requests
 
 # The model to train on the scientific papers dataset
 class WikitextLM(pl.LightningModule):
+    """
+        Language model trained on the wikitext dataset
+    """
     def __init__(self, model_name):
         super().__init__()
         config = GPT2Config()
         self.model_name = model_name
         self.model = GPT2LMHeadModel(config)
         self.loss = torch.nn.CrossEntropyLoss(reduction='none')
-        self.rake = Rake()
-        self.wikitext_client = WikitextClient()
+        self.wikidata_client = WikidataClient()
 
     # Download and prepare data
     def prepare_data(self):
@@ -27,23 +29,7 @@ class WikitextLM(pl.LightningModule):
         self.EOS = tokenizer.pad_token
 
         def _extract_knowledge(x):
-            try:
-                self.rake.extract_keywords_from_text(x['text'])
-                ranked_phrases = self.rake.get_ranked_phrases()
-                for phrase in ranked_phrases:
-                    try:
-                        id = self.get_id(phrase)
-                        entity = self.client.get(id)
-                        description = entity.attributes['descriptions']['en']['value']
-                        break
-                    except:
-                        continue        
-                label = entity.attributes['labels']['en']['value']
-                statement = label + ":" + description
-                x['statement'] = statement
-            except:
-                x['statement'] = ""
-            return x
+            
               
 
         def _tokenize(x):
