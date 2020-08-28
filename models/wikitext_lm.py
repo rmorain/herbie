@@ -27,11 +27,7 @@ class WikitextLM(pl.LightningModule):
         tokenizer = GPT2Tokenizer.from_pretrained(self.model_name)
         tokenizer.pad_token = tokenizer.eos_token 
         self.EOS = tokenizer.pad_token
-
-        def _extract_knowledge(x):
             
-              
-
         def _tokenize(x):
             tokens = tokenizer(
                 x['text'],
