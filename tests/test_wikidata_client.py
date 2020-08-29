@@ -32,6 +32,18 @@ class TestWikidataClient(unittest.TestCase):
         entity = wikidata_client._get_entity_from_ranked_phrases(ranked_phrases)
         self.assertIsNone(entity.entity)
 
+    def test_extract_knowledge(self):
+        # Positive example
+        x = {'text':'Steph Curry is my favorite basketball player'}
+        wikidata_client = WikidataClient()
+        x = wikidata_client.extract_knowledge(x)
+        self.assertEqual(x['statement'], 'Stephen Curry:American basketball player')
+
+        # Negative example
+        x = {'text':'no no no no nononoooo'}
+        wikidata_client = WikidataClient()
+        x = wikidata_client.extract_knowledge(x)
+        self.assertEqual(x['statement'], '')
 
 if __name__ == '__main__':
     unittest.main()
