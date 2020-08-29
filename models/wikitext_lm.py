@@ -1,44 +1,39 @@
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config
 import pytorch_lightning as pl
 import torch
-import sh
 import nlp
-import wandb
-from pytorch_lightning.loggers import WandbLogger
-from rake_nltk import Rake
-from utils.wikitext_client import WikitextClient
-import requests
+from models.utils.wikidata_client import WikidataClient
 
 # The model to train on the scientific papers dataset
 class WikitextLM(pl.LightningModule):
     """
         Language model trained on the wikitext dataset
     """
-    def __init__(self, model_name):
+    def __init__(self, run_params):
         super().__init__()
+        self.run_params = run_params
         config = GPT2Config()
-        self.model_name = model_name
         self.model = GPT2LMHeadModel(config)
         self.loss = torch.nn.CrossEntropyLoss(reduction='none')
-        self.wikidata_client = WikidataClient()
+        
 
     # Download and prepare data
     def prepare_data(self):
-        tokenizer = GPT2Tokenizer.from_pretrained(self.model_name)
+        tokenizer = GPT2Tokenizer.from_pretrained(self.run_params['model_name'])
         tokenizer.pad_token = tokenizer.eos_token 
         self.EOS = tokenizer.pad_token
             
         def _tokenize(x):
             tokens = tokenizer(
                 x['text'],
-                max_length=seq_length,
+                max_length=self.run_params['seq_length'],
                 truncation=True,
                 padding=True)
             x['input_ids'] = tokens['input_ids']
             x['attention_mask'] = tokens['attention_mask']
             tokens = tokenizer(
                 x['statement'],
-                max_length=statement_length,
+                max_length=self.run_params['statement_length'],
                 truncation=True,
                 padding=True)
             x['statement_ids'] = tokens['input_ids']
@@ -46,8 +41,15 @@ class WikitextLM(pl.LightningModule):
             return x
 
         def _prepare_ds(split):
+            dataset = self.run_params['dataset']
+            repo = self.run_params['repo']
+            batch_size = self.run_params['batch_size']
+            debug = self.run_params['debug']
+            self.run_params['percent']
+
             ds = nlp.load_dataset(dataset, repo, split=f'{split}[:{batch_size if debug else f"{percent}%"}]')
-            ds = ds.map(_extract_knowledge)
+            wikidata_client = WikidataClient()
+            ds = ds.map(wikidata_client.extract_knowledge)
             ds = ds.map(_tokenize, batched=True)
             ds.set_format(type='torch', columns=['input_ids', 'attention_mask', 'statement_ids', 'statement_mask'])
             return ds
@@ -78,7 +80,7 @@ class WikitextLM(pl.LightningModule):
     def train_dataloader(self):
         return torch.utils.data.DataLoader(
                 self.train_ds,
-                batch_size=batch_size,
+                batch_size=self.run_params['batch_size'],
                 drop_last=True,
                 shuffle=True,
                 num_workers=2,
@@ -88,7 +90,7 @@ class WikitextLM(pl.LightningModule):
     def val_dataloader(self):
         return torch.utils.data.DataLoader(
                 self.val_ds,
-                batch_size=batch_size,
+                batch_size=self.run_params['batch_size'],
                 drop_last=True,
                 shuffle=False,
                 num_workers=2,
@@ -99,6 +101,6 @@ class WikitextLM(pl.LightningModule):
     def configure_optimizers(self):
         return torch.optim.SGD(
             self.parameters(),
-            lr=lr,
-            momentum=momentum,
+            lr=self.run_params['lr'],
+            momentum=self.run_params['momentum'],
         )  
