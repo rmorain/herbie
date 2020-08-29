@@ -1,9 +1,96 @@
 import requests
 from rake_nltk import Rake
+from wikidata.client import Client
 
 class WikidataClient():
+    """
+    Contains 'extract_knowledge' method which extracts knowledge from
+    the Wikidata knowledge base. All other submethods and subclasses exist
+    to help the 'extract_knowledge' method.
+    """
     def __init__(self):
         self.rake = Rake()
+        self.client = Client()
+    
+    class WikidataEntity():
+        """
+        Class that holds attributes related to a Wikidata entity
+
+        attributes:
+            id: (str) Identifies wikidata entity.
+            label: (str) The name of the wikidata entity.
+            description: (str) A description of the entity.
+            entity: (Entity class) Wikidata entity object. Used to retrieve label and description.
+        """
+        def __init__(self):
+            self.id = None  
+            self.label = None
+            self.description = None
+            self.entity = None        
+
+        def is_ok(self):
+            if self.label and self.description:
+                return True
+            else:
+                return False
+
+    def extract_knowledge(self, x):
+        """
+        Modfies a datapoint, x, to include a new feature,
+        'statement'. A 'statement' is a (str) that is formated
+        subject:description.
+        """
+        wikidata_entity = self._get_wikidata_entity(x)
+        if wikidata_entity.is_ok():
+            statement = wikidata_entity.label + ":" + wikidata_entity.description
+            x['statement'] = statement
+        else:
+            x['statement'] = ""
+        return x
+
+    def _get_wikidata_entity(self, x):
+        """
+        Returns a WikidataEntity object that contains all the information needed to create a statement
+        """
+        self.rake.extract_keywords_from_text(x['text'])
+        ranked_phrases = self.rake.get_ranked_phrases()
+        wikidata_entity = self._get_entity_from_ranked_phrases(ranked_phrases)
+        return wikidata_entity
+
+    def _get_entity_from_ranked_phrases(self, ranked_phrases):
+        """
+        Returns a wikidata entity object with as much information
+        as possible.
+
+        Args:
+            ranked_phrases (list[str]): 
+                Each phrase is used to 
+        """
+        entity = self.WikidataEntity()
+        for phrase in ranked_phrases:
+            try:
+                entity.id = self._get_wikidata_entity_id(phrase)
+                entity.entity = self.client.get(entity.id)
+                entity.description = entity.entity.attributes['descriptions']['en']['value']
+                entity.label = entity.entity.attributes['labels']['en']['value']
+                break
+            except:
+                entity.__init__()  # clear variables
+                continue
+        return entity
+
+    def _get_wikidata_entity_id(self, token):
+        """
+        Returns a string that points to a wikidata entity.
+
+        Args:
+            token (str):
+                The token or phrase used for the search 
+        """
+        request = self._preprocess_wikidata_id_request(token)
+        wikidata_entity = requests.get(request)
+        entity_id = self._validate_wikidata_entity_id(wikidata_entity)
+        return entity_id
 
     def _preprocess_wikidata_id_request(self, token):
         """
@@ -17,7 +104,7 @@ class WikidataClient():
         format = "format=json"
         return endpoint + action + search + language + format
 
-    def _verify_wikidata_entity(self, entity):
+    def _validate_wikidata_entity_id(self, entity):
         """
         Returns a wikidata entity id and checks that it's valid. Otherwise, returns None
         """
@@ -27,45 +114,3 @@ class WikidataClient():
         except:
             entity_id = None
         return entity_id
-
-    def get_wikidata_entity_id(self, token):
-        """
-        Returns a string that points to a wikidata entity.
-
-        Args:
-            token (str):
-                The token or phrase used for the search 
-        """
-        request = self._preprocess_wikidata_id_request(token)
-        wikidata_entity = requests.get(request)
-        entity_id = self._verify_wikidata_entity(wikidata_entity)
-        return entity_id
-
-    def _get_statement(self, x):
-        """
-        returns 
-        """
-
-    def extract_knowledge(self, x):
-        """
-        Modfies a datapoint, x, to include a new feature,
-        'statement'. A 'statement' is a (str) that is formated
-        subject:description.
-        """
-        try:
-            self.rake.extract_keywords_from_text(x['text'])
-            ranked_phrases = self.rake.get_ranked_phrases()
-            for phrase in ranked_phrases:
-                try:
-                    id = self.get_wikidata_entity_id(phrase)
-                    entity = self.client.get(id)
-                    description = entity.attributes['descriptions']['en']['value']
-                    break
-                except:
-                    continue        
-            label = entity.attributes['labels']['en']['value']
-            statement = label + ":" + description
-            x['statement'] = statement
-        except:
-            x['statement'] = ""
-        return x
