@@ -83,7 +83,7 @@ class WikitextLM(pl.LightningModule):
                 batch_size=self.run_params['batch_size'],
                 drop_last=True,
                 shuffle=True,
-                num_workers=2,
+                num_workers=4,
                 pin_memory=True,
                 ) 
 
@@ -93,7 +93,7 @@ class WikitextLM(pl.LightningModule):
                 batch_size=self.run_params['batch_size'],
                 drop_last=True,
                 shuffle=False,
-                num_workers=2,
+                num_workers=4,
                 pin_memory=True,
                 )
 
