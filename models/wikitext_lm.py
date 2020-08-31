@@ -50,6 +50,7 @@ class WikitextLM(pl.LightningModule):
             ds = nlp.load_dataset(dataset, repo, split=f'{split}[:{batch_size if debug else f"{percent}%"}]')
             wikidata_client = WikidataClient()
             ds = ds.map(wikidata_client.extract_knowledge)
+            wikidata_client.data_writer.close()
             ds = ds.map(_tokenize, batched=True)
             ds.set_format(type='torch', columns=['input_ids', 'attention_mask', 'statement_ids', 'statement_mask'])
             return ds

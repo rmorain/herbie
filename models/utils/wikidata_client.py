@@ -1,6 +1,7 @@
 import requests
 from rake_nltk import Rake
 from wikidata.client import Client
+from data_writer import DataWriter
 
 class WikidataClient():
     """
@@ -11,6 +12,7 @@ class WikidataClient():
     def __init__(self):
         self.rake = Rake()
         self.client = Client()
+        self.data_writer = DataWriter()
     
     class WikidataEntity():
         """
@@ -46,6 +48,7 @@ class WikidataClient():
             x['statement'] = statement
         else:
             x['statement'] = ""
+        self.data_writer.write(x)
         return x
 
     def _get_wikidata_entity(self, x):
