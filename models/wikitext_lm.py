@@ -2,6 +2,7 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config
 import pytorch_lightning as pl
 import torch
 import nlp
+import os
 from models.utils.wikidata_client import WikidataClient
 
 # The model to train on the scientific papers dataset
@@ -48,7 +49,7 @@ class WikitextLM(pl.LightningModule):
             self.run_params['percent']
 
             ds = nlp.load_dataset(dataset, repo, split=f'{split}[:{batch_size if debug else f"{percent}%"}]')
-            wikidata_client = WikidataClient()
+            wikidata_client = WikidataClient(self.run_params['data_dir'])
             ds = ds.map(wikidata_client.extract_knowledge)
             wikidata_client.data_writer.close()
             ds = ds.map(_tokenize, batched=True)

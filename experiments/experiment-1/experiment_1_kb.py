@@ -7,11 +7,17 @@ import pytorch_lightning as pl
 import torch
 import wandb
 from pytorch_lightning.loggers import WandbLogger
+import pathlib
+import sh
 from models.wikitext_lm import WikitextLM
 
 # !wandb login e279feeab3d602ab530e4eb23df8ac3ff3763461
 # import IPython ; IPython.embed() ; exit(1)
-
+data_dir = pathlib.Path(__file__).parent.absolute()
+try:
+    sh.rm(data_dir / 'data.txt')
+except:
+    pass
 run_params = {
         'model_name' : 'gpt2',
         'epochs' : 1,
@@ -23,9 +29,9 @@ run_params = {
         'statement_length' : 16,
         'momentum' : .9,
         'lr' : 1e-2,
-        'repo' : 'wikitext-103-raw-v1'
+        'repo' : 'wikitext-103-raw-v1',
+        'data_dir' : data_dir,
 }
-
 model = WikitextLM(run_params)
 trainer = pl.Trainer(
     default_root_dir='logs',

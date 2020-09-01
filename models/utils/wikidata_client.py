@@ -1,7 +1,7 @@
 import requests
 from rake_nltk import Rake
 from wikidata.client import Client
-from data_writer import DataWriter
+from models.utils.data_writer import DataWriter
 
 class WikidataClient():
     """
@@ -9,10 +9,10 @@ class WikidataClient():
     the Wikidata knowledge base. All other submethods and subclasses exist
     to help the 'extract_knowledge' method.
     """
-    def __init__(self):
+    def __init__(self, data_dir):
         self.rake = Rake()
         self.client = Client()
-        self.data_writer = DataWriter()
+        self.data_writer = DataWriter(data_dir / 'data.txt')
     
     class WikidataEntity():
         """
