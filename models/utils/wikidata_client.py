@@ -2,6 +2,8 @@ import requests
 from rake_nltk import Rake
 from wikidata.client import Client
 from models.utils.data_writer import DataWriter
+import pathlib
+from nlp import load_dataset
 
 class WikidataClient():
     """
@@ -12,7 +14,11 @@ class WikidataClient():
     def __init__(self, data_dir):
         self.rake = Rake()
         self.client = Client()
-        self.data_writer = DataWriter(data_dir / 'data.txt')
+        self.data_file = data_dir / 'data.txt'
+        self.data_writer = DataWriter(self.data_file)
+        self.ds = None
+        if self.data_file.exists:
+            self.ds = load_dataset('text', data_files={'train': [str(self.data_file)]})
     
     class WikidataEntity():
         """
@@ -42,6 +48,8 @@ class WikidataClient():
         'statement'. A 'statement' is a (str) that is formated
         subject:description.
         """
+        
+            
         wikidata_entity = self._get_wikidata_entity(x)
         if wikidata_entity.is_ok():
             statement = wikidata_entity.label + ":" + wikidata_entity.description

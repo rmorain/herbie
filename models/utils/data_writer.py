@@ -19,6 +19,7 @@ class DataWriter():
         """
         if self.file_object:
             self.file_object.write(x['statement'])
+            self.file_object.write('\n')
 
     def close(self):
         if self.file_object:

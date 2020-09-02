@@ -46,7 +46,7 @@ class WikitextLM(pl.LightningModule):
             repo = self.run_params['repo']
             batch_size = self.run_params['batch_size']
             debug = self.run_params['debug']
-            self.run_params['percent']
+            percent = self.run_params['percent']
 
             ds = nlp.load_dataset(dataset, repo, split=f'{split}[:{batch_size if debug else f"{percent}%"}]')
             wikidata_client = WikidataClient(self.run_params['data_dir'])
@@ -54,6 +54,8 @@ class WikitextLM(pl.LightningModule):
             wikidata_client.data_writer.close()
             ds = ds.map(_tokenize, batched=True)
             ds.set_format(type='torch', columns=['input_ids', 'attention_mask', 'statement_ids', 'statement_mask'])
+
+
             return ds
 
         self.train_ds, self.val_ds = map(_prepare_ds, ('train', 'validation'))

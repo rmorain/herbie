@@ -14,14 +14,14 @@ from models.wikitext_lm import WikitextLM
 # !wandb login e279feeab3d602ab530e4eb23df8ac3ff3763461
 # import IPython ; IPython.embed() ; exit(1)
 data_dir = pathlib.Path(__file__).parent.absolute()
-try:
-    sh.rm(data_dir / 'data.txt')
-except:
-    pass
+# try:
+#     sh.rm(data_dir / 'data.txt')
+# except:
+#     pass
 run_params = {
         'model_name' : 'gpt2',
         'epochs' : 1,
-        'debug' : True,
+        'debug' : False,
         'batch_size' : 8,
         'percent' : 1,
         'dataset' : 'wikitext',
@@ -38,7 +38,7 @@ trainer = pl.Trainer(
     gpus=(1 if torch.cuda.is_available() else 0),
     max_epochs=run_params['epochs'],
     fast_dev_run=run_params['debug'],
-    logger=WandbLogger(save_dir='logs/', name='wikitext-no-kb', project='experiment-1'),
+    logger=WandbLogger(save_dir='logs/', name='wikitext-kb', project='experiment-1'),
 )
 
 trainer.fit(model)
