@@ -55,9 +55,7 @@ class WikitextLM(pl.LightningModule):
             ds = ds.map(_tokenize, batched=True)
             ds.set_format(type='torch', columns=['input_ids', 'attention_mask', 'statement_ids', 'statement_mask'])
 
-
             return ds
-
         self.train_ds, self.val_ds = map(_prepare_ds, ('train', 'validation'))
 
     def forward(self, inputs):

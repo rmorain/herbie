@@ -15,10 +15,11 @@ class WikidataClient():
         self.rake = Rake()
         self.client = Client()
         self.data_file = data_dir / 'data.txt'
-        self.data_writer = DataWriter(self.data_file)
         self.ds = None
-        if self.data_file.exists:
+        if self.data_file.is_file():
             self.ds = load_dataset('text', data_files={'train': [str(self.data_file)]})
+        self.data_writer = DataWriter(self.data_file)
+        
     
     class WikidataEntity():
         """
