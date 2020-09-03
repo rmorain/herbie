@@ -9,13 +9,15 @@ import wandb
 from pytorch_lightning.loggers import WandbLogger
 import pathlib
 import sh
+import filecmp
 from models.wikitext_lm import WikitextLM
 
 class TestExperiment(unittest.TestCase):
     def test_experiment(self):
         data_dir = pathlib.Path(__file__).parent.absolute()
+        file_object = data_dir / 'data.txt'
         try:
-            sh.rm(data_dir / 'data.txt')
+            sh.rm(file_object)
         except:
             pass
         run_params = {
@@ -41,11 +43,11 @@ class TestExperiment(unittest.TestCase):
         )
 
         trainer.fit(model)
-        # try:
-        #     sh.rm(data_dir / 'data.txt')
-        # except:
-        #     pass
-        import IPython ; IPython.embed() ; exit(1)
+        self.assertTrue(filecmp.cmp('test-data.txt', str(file_object)))
+        try:
+            sh.rm(file_object)
+        except:
+            pass
 
 if __name__ == '__main__':
     unittest.main()
