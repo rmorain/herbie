@@ -15,9 +15,9 @@ from models.wikitext_lm import WikitextLM
 class TestExperiment(unittest.TestCase):
     def test_experiment(self):
         data_dir = pathlib.Path(__file__).parent.absolute()
-        file_object = data_dir / 'data.txt'
+        data_file = data_dir / 'data.txt'
         try:
-            sh.rm(file_object)
+            sh.rm(data_file)
         except:
             pass
         run_params = {
@@ -32,7 +32,7 @@ class TestExperiment(unittest.TestCase):
         'momentum' : .9,
         'lr' : 1e-2,
         'repo' : 'wikitext-103-raw-v1',
-        'data_dir' : data_dir,
+        'data_file': data_file,
         }
         model = WikitextLM(run_params)
         trainer = pl.Trainer(
@@ -43,9 +43,9 @@ class TestExperiment(unittest.TestCase):
         )
 
         trainer.fit(model)
-        self.assertTrue(filecmp.cmp(data_dir / 'test-data.txt', str(file_object)))
+        self.assertTrue(filecmp.cmp(data_dir / 'test-data.txt', str(data_file)))
         try:
-            sh.rm(file_object)
+            sh.rm(data_file)
         except:
             pass
 

@@ -69,6 +69,15 @@ class WikidataClient():
         self.data_writer.write(x)
         return x
 
+    def close(self):
+        """
+        If there is a file to close it closes it
+        """
+        if self.data_writer:
+            self.data_writer.close()
+        if self.reading:
+            self.data_file.close()
+
     def _get_wikidata_entity(self, x):
         """
         Returns a WikidataEntity object that contains all the information needed to create a statement
