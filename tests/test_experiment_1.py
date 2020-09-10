@@ -43,7 +43,7 @@ class TestExperiment(unittest.TestCase):
         )
 
         trainer.fit(model)
-        self.assertTrue(filecmp.cmp('test-data.txt', str(file_object)))
+        self.assertTrue(filecmp.cmp(data_dir / 'test-data.txt', str(file_object)))
         try:
             sh.rm(file_object)
         except:

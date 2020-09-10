@@ -15,7 +15,7 @@ class TestDataWriter(unittest.TestCase):
 
         # read data back
         file_object = open(file_path, 'r')
-        line = file_object.read()
+        line = file_object.read().strip('\n')
         self.assertEqual(line, x['statement'])
         file_object.close()
         os.remove(file_path)

@@ -1,0 +1,85 @@
+Project Notes
+09/04/20
+To do
+. Concatenate dataset loaded from data.txt with wikitext
+
+Notes
+What about training and validation datasets?
+Are they different for wikitext?
+Solution:
+	Build the whole dataset before it gets split between training and validation.
+
+Concatenate two datasets
+What do we know?
+Datasets are wrappers of pyarrow tables.
+Pyarrow tables are made of pyarrow arrays.
+They have schemas which look like this: column_name:data_type
+
+Are there any built in functions to combine two pyarrow tables?
+
+plan b
+
+We don't need to concatenate datasets. We just need to read the data file and add it to the dataset. 
+
+Where should this happen? 
+
+
+wikitext_client.extract_knowledge
+
+This is a good spot because that is where it would happen regardless of whether we are using the text file or not. 
+
+In extract knowledge
+	If the text file exists, use that.
+	Otherwise create one and write to it.  
+
+I am changing wikidata client so that it only writes to a file if one is specified.
+
+I need to fix rewrite of some tests for the wikidata client. It says test is not defined for some reason.
+
+09/09/20
+I'm not sure where I left off. I think I need to finish writing TestWikidataClient again.
+
+09/10/20
+Yes, I need to finish testing WikidataClient
+
+extract_knowledge expected behavior:
+  First we check if the data_file exists. 
+  If it does, read the next line of the file and set that equal to x['statement']
+  return
+
+Let's check if a file exists. 
+Ok, the file exists. But it is empty. We enter the if statement and try to read a line.
+
+We get the 'Posixpath' error because self.data_file is a PosixPath. Does not have readline. 
+
+Is self.datafile supposed to be the file itself or the file path?
+ok I set a break point to see if the file is getting opened in the init.
+
+ok so the first breakpoint we hit is extract_knowledge.
+That doesn't seem right because we only want to use that function through wikidataclient. As in we shouldn't call the function without first initializing the wikidata client.
+
+Actually I think the problem is that the is_file is returning false. 
+
+Ok, I think the real problem is my tests don't know whether to expect to create a file or to read from a file. The file path is given, so a text file is created. 
+
+Let me look at all the tests and see if they should be changed. 
+
+test_get_wikidata_entity_id
+
+Some functions only get called if there is no file. Like this one.
+This test shouldn't need any special treatment.
+The test passes.
+
+test_get_entity_from_ranked_phrases
+This should be fine
+passes
+
+test_extract_knowledge
+This one should be split into two tests. With and without a textfile. 
+
+I fixed the first test where it is writing not reading.
+
+Now I need to make a new test where I am reading not writing.
+Ok, that test works now. Good :)
+
+That's all the tests so wikidata client is working :)

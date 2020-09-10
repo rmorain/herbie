@@ -5,13 +5,9 @@ class DataWriter():
     """
     Writes data extracted from Wikidata to txt file
     """
-    def __init__(self, file_path=None):
+    def __init__(self, file_path):
         # If the file does not exist, create the file
-        if not path.exists(file_path):
-            self.file_object = open(file_path, 'w')
-        else:
-            # Otherwise, we won't write to the file
-            self.file_object = None
+        self.file_object = open(file_path, 'w')
 
     def write(self, x):
         """

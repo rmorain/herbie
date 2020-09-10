@@ -11,14 +11,19 @@ class WikidataClient():
     the Wikidata knowledge base. All other submethods and subclasses exist
     to help the 'extract_knowledge' method.
     """
-    def __init__(self, data_dir):
+    def __init__(self, data_file):
         self.rake = Rake()
         self.client = Client()
-        self.data_file = data_dir / 'data.txt'
+        self.data_file = data_file 
         self.ds = None
+        self.data_writer = None 
+        self.reading = False
         if self.data_file.is_file():
-            self.ds = load_dataset('text', data_files={'train': [str(self.data_file)]})
-        self.data_writer = DataWriter(self.data_file)
+            self.data_file = open(self.data_file, 'r')
+            self.reading = True
+        else:   
+            # Creates a file to write to
+            self.data_writer = DataWriter(self.data_file)
         
     
     class WikidataEntity():
@@ -49,8 +54,12 @@ class WikidataClient():
         'statement'. A 'statement' is a (str) that is formated
         subject:description.
         """
-        
-            
+        # If data file is specified read from it
+        if self.reading:
+            line = self.data_file.readline()
+            x['statement'] = line.strip('\n')
+            return x
+           
         wikidata_entity = self._get_wikidata_entity(x)
         if wikidata_entity.is_ok():
             statement = wikidata_entity.label + ":" + wikidata_entity.description
