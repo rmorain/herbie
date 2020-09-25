@@ -83,3 +83,31 @@ Now I need to make a new test where I am reading not writing.
 Ok, that test works now. Good :)
 
 That's all the tests so wikidata client is working :)
+
+There are some warnings on the test but I'll allow it.
+
+
+09/14/20
+
+I think I'm ready to run experiment 1.
+
+EXPERIMENT 1
+
+I train GPT2 from scratch on 1% of the Wikitext dataset. 
+First, GPT2 is trained without any statements from the knowledge base. 
+    This has already been done.
+    We should check this on wandb.
+
+    Ok, the run is still there and looks good. It took 4 hours to train. 
+    It would be best to not rerun it right now. 
+
+Second, GPT2 is trained with statements.
+    What file is that experiment in?
+    Ok, the experiment is in experiment-1/experiment_1_kb.py
+    I need to pass it the correct data file. How should that be done?
+
+Ok, I ran the experiment and there is one problem.
+The no kb experiment used 10% of the data while the kb experiment only used 1%.
+I want to rerun the no kb experiment with only 1% of the data.
+I think this will require refactoring the wikitextlm to turn off the kb statements. 
+
