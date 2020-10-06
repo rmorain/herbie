@@ -14,17 +14,17 @@ from models.wikitext_lm import WikitextLM
 # !wandb login e279feeab3d602ab530e4eb23df8ac3ff3763461
 # import IPython ; IPython.embed() ; exit(1)
 data_dir = pathlib.Path(__file__).parent.absolute()
-data_file = data_dir / 'data.txt'
+data_file = data_dir / 'data25percent.txt'
 # try:
 #     sh.rm(data_dir / 'data.txt')
 # except:
 #     pass
 run_params = {
         'model_name' : 'gpt2',
-        'epochs' : 10,
+        'epochs' : 0,
         'debug' : False,
         'batch_size' : 8,
-        'percent' : 10,
+        'percent' : 25,
         'dataset' : 'wikitext',
         'seq_length' : 32,
         'statement_length' : 16,
