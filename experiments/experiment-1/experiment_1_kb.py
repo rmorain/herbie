@@ -22,7 +22,7 @@ data_file = data_dir / 'data25percent.txt'
 run_params = {
         'model_name' : 'gpt2',
         'epochs' : 0,
-        'debug' : False,
+        'debug' : True,
         'batch_size' : 8,
         'percent' : 25,
         'dataset' : 'wikitext',
@@ -32,6 +32,7 @@ run_params = {
         'lr' : 1e-2,
         'repo' : 'wikitext-103-raw-v1',
         'data_file' : data_file,
+        'num_workers' : 8,
 }
 model = WikitextLM(run_params)
 trainer = pl.Trainer(

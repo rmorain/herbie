@@ -2,29 +2,43 @@ from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config
 import pytorch_lightning as pl
 import torch
 import nlp
-
+import os
+from models.utils.wikidata_client import WikidataClient
 
 # The model to train on the scientific papers dataset
-class WikitextLM(pl.LightningModule):
+class WikitextKBLM(pl.LightningModule):
+    """
+        Language model trained on the wikitext dataset
+    """
     def __init__(self, run_params):
         super().__init__()
         self.run_params = run_params
         config = GPT2Config()
         self.model = GPT2LMHeadModel(config)
         self.loss = torch.nn.CrossEntropyLoss(reduction='none')
+        
 
     # Download and prepare data
     def prepare_data(self):
         tokenizer = GPT2Tokenizer.from_pretrained(self.run_params['model_name'])
         tokenizer.pad_token = tokenizer.eos_token 
+        self.EOS = tokenizer.pad_token
+            
         def _tokenize(x):
-            tokens = tokenizer.batch_encode_plus(
+            tokens = tokenizer(
                 x['text'],
                 max_length=self.run_params['seq_length'],
                 truncation=True,
-                pad_to_max_length=True)
+                padding=True)
             x['input_ids'] = tokens['input_ids']
             x['attention_mask'] = tokens['attention_mask']
+            tokens = tokenizer(
+                x['statement'],
+                max_length=self.run_params['statement_length'],
+                truncation=True,
+                padding=True)
+            x['statement_ids'] = tokens['input_ids']
+            x['statement_mask'] = tokens['attention_mask']
             return x
 
         def _prepare_ds(split):
@@ -35,17 +49,21 @@ class WikitextLM(pl.LightningModule):
             percent = self.run_params['percent']
 
             ds = nlp.load_dataset(dataset, repo, split=f'{split}[:{batch_size if debug else f"{percent}%"}]')
+            wikidata_client = WikidataClient(self.run_params['data_file'])
+            ds = ds.map(wikidata_client.extract_knowledge)
+            wikidata_client.close()
             ds = ds.map(_tokenize, batched=True)
-            ds.set_format(type='torch', columns=['input_ids', 'attention_mask'])
-            return ds
+            ds.set_format(type='torch', columns=['input_ids', 'attention_mask', 'statement_ids', 'statement_mask'])
 
+            return ds
         self.train_ds, self.val_ds = map(_prepare_ds, ('train', 'validation'))
 
     def forward(self, inputs):
-        # Only call if training
-        input_ids = inputs['input_ids']
-        attention_mask = inputs['attention_mask']
-        loss = self.model(input_ids, attention_mask=attention_mask, labels=input_ids)[0]
+        x = torch.cat((inputs['input_ids'], inputs['statement_ids']), -1)   
+        attention_mask = torch.cat((inputs['attention_mask'], inputs['statement_mask']), -1)  
+        padding = torch.full_like(inputs['statement_ids'], fill_value=50256, dtype=torch.long, device=torch.device('cuda'))   
+        labels = torch.cat((inputs['input_ids'], padding), dim=-1)
+        loss = self.model(x, attention_mask=attention_mask, labels=labels)[0]
         return loss
 
     def training_step(self, batch, batch_idx):
@@ -68,7 +86,7 @@ class WikitextLM(pl.LightningModule):
                 drop_last=True,
                 shuffle=True,
                 num_workers=self.run_params['num_workers'],
-                pin_memory=True
+                pin_memory=True,
                 ) 
 
     def val_dataloader(self):
@@ -78,12 +96,13 @@ class WikitextLM(pl.LightningModule):
                 drop_last=True,
                 shuffle=False,
                 num_workers=self.run_params['num_workers'],
-                pin_memory=True
-                ) 
+                pin_memory=True,
+                )
+
 
     def configure_optimizers(self):
         return torch.optim.SGD(
             self.parameters(),
             lr=self.run_params['lr'],
             momentum=self.run_params['momentum'],
-        ) 
+        )  

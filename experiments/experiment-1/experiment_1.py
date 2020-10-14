@@ -10,7 +10,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 # Variables
 model_name = 'gpt2'
-epochs = 10
+epochs = 1
 debug = False
 batch_size = 8
 percent = 1
