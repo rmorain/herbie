@@ -28,7 +28,7 @@ data_file = data_dir / 'data25percent.txt'
 
 run_params = {
         'model_name' : 'gpt2',
-        'max_epochs' : 50,
+        'max_epochs' : 20,
         'debug' : False,
         'batch_size' : 8,
         'percent' : 25,
@@ -51,7 +51,7 @@ trainer = pl.Trainer(
     logger=WandbLogger(save_dir='logs/', name='wikitext-no-kb-large', project=project),
 )
 
-trainer.fit(model)
+#trainer.fit(model)
 
 # With Knowledge Base
 
