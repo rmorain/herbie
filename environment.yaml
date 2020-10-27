@@ -1,4 +1,4 @@
-name: transformers
+name: herbie 
 channels:
   - defaults
 dependencies:
@@ -53,7 +53,7 @@ dependencies:
     - jedi==0.17.1
     - joblib==0.16.0
     - markdown==3.2.2
-    - nlp==0.3.0
+    - datasets==1.1.2 
     - nltk==3.5
     - numpy==1.19.0
     - nvidia-ml-py3==7.352.0
