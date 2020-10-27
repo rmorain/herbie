@@ -1,7 +1,7 @@
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, GPT2Config
 import pytorch_lightning as pl
 import torch
-import nlp
+from datasets import load_dataset
 import os
 from models.utils.wikidata_client import WikidataClient
 
@@ -48,7 +48,7 @@ class WikitextKBLM(pl.LightningModule):
             debug = self.run_params['debug']
             percent = self.run_params['percent']
 
-            ds = nlp.load_dataset(dataset, repo, split=f'{split}[:{batch_size if debug else f"{percent}%"}]')
+            ds = load_dataset(dataset, repo, split=f'{split}[:{batch_size if debug else f"{percent}%"}]')
             wikidata_client = WikidataClient(self.run_params['data_file'])
             ds = ds.map(wikidata_client.extract_knowledge)
             wikidata_client.close()

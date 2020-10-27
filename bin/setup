@@ -1,0 +1,7 @@
+#!/bin/bash
+
+# Download data
+mkdir data/wikitext
+curl https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-103-raw-v1.zip -o data/wikitext/wikitext-103-raw.zip
+# Unzip data
+unzip data/wikitext/wikitext-103-raw.zip -d data/wikitext
