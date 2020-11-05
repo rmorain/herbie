@@ -9,10 +9,6 @@ from models.utils.run_params import RunParams
 class TestDataLoading(unittest.TestCase):
     def setUp(self):
         self.run_params = RunParams() 
-    def test_load_data(self):
-        # Load data from `datasets`
-        import pdb; pdb.set_trace()
-        load_data(self.run_params)
         
       
 if __name__ == '__main__':
